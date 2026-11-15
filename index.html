@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>你体内藏着哪种危险人格？</title>
+<meta name="description" content="20 道题，照见你不愿承认的那一面。结果页支持保存长图。" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#07060a;
+    --ink:#f2eef7;
+    --dim:rgba(242,238,247,.55);
+    --line:rgba(255,255,255,.1);
+    --card:rgba(255,255,255,.045);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
+  body{
+    font-family:"PingFang SC","HarmonyOS Sans SC","Noto Sans SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    min-height:100vh;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(60% 40% at 50% 0%, rgba(120,90,190,.18), transparent 70%),
+      radial-gradient(50% 35% at 80% 100%, rgba(190,60,70,.12), transparent 70%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='80' height='80' filter='url(%23n)'/></svg>");
+  }
+  .shell{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:0 22px 64px;min-height:100vh}
+
+  .screen{display:none;animation:fade .5s ease both}
+  .screen.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  /* ============ 封面 ============ */
+  .cover{padding-top:12vh;text-align:center}
+  .kicker{font-size:12px;letter-spacing:.42em;color:var(--dim);margin-bottom:26px;text-indent:.42em}
+  .cover h1{
+    font-size:clamp(34px,10vw,46px);line-height:1.24;margin:0 0 6px;font-weight:900;letter-spacing:-.02em;
+    background:linear-gradient(180deg,#fff 20%,#b9a6d8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .cover h1 em{font-style:normal;color:#e0384c;-webkit-text-fill-color:#e0384c;text-shadow:0 0 26px rgba(224,56,76,.55)}
+  .cover .sub{font-size:15px;color:var(--dim);margin:18px 0 0;letter-spacing:.08em}
+  .cover .poem{margin:34px auto 0;max-width:330px;font-size:14px;line-height:2.1;color:rgba(242,238,247,.72);text-align:left}
+  .cover .poem p{margin:0 0 14px}
+
+  .cta{
+    display:block;width:100%;margin-top:44px;padding:18px 0;border:0;border-radius:999px;cursor:pointer;
+    font-size:17px;font-weight:800;letter-spacing:.16em;color:#12060b;
+    background:linear-gradient(135deg,#f5d9a0,#e6b566 45%,#c8933f);
+    box-shadow:0 14px 40px -12px rgba(230,181,102,.6), inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .2s;
+  }
+  .cta:active{transform:scale(.975)}
+  .meta-line{margin-top:13px;font-size:12px;color:rgba(242,238,247,.34);letter-spacing:.1em}
+
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:40px}
+  .gallery .cell{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0c0a10}
+  .gallery .cell img{width:100%;height:100%;object-fit:cover;filter:saturate(.85) brightness(.8);transition:.4s}
+  .gallery .cell:hover img{filter:none;transform:scale(1.06)}
+  .gallery .cell span{position:absolute;left:6px;bottom:4px;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.85);text-shadow:0 1px 6px #000}
+
+  /* ============ 答题 ============ */
+  .topbar{
+    position:sticky;top:0;z-index:9;padding:16px 0 12px;
+    background:linear-gradient(180deg,rgba(7,6,10,.96),rgba(7,6,10,.72) 70%,transparent);
+  }
+  .bar{height:3px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+  .bar > i{display:block;height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#8d5ae0,#e0384c);transition:width .35s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(224,56,76,.6)}
+  .bar-meta{display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:rgba(242,238,247,.42);letter-spacing:.12em}
+
+  .q-wrap{padding-top:22px}
+  .q-index{font-size:12px;letter-spacing:.3em;color:rgba(224,56,76,.9);margin-bottom:14px}
+  .q-title{font-size:23px;line-height:1.55;font-weight:800;letter-spacing:-.01em;margin:0 0 8px}
+  .q-title .hl{color:#e8c58a}
+  .q-scene{font-size:13.5px;line-height:1.85;color:rgba(242,238,247,.5);margin:0 0 26px}
+
+  .opts{display:flex;flex-direction:column;gap:11px}
+  .opt{
+    display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;
+    padding:17px 18px;border-radius:16px;cursor:pointer;
+    border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:15.5px;line-height:1.6;font-family:inherit;
+    transition:border-color .22s,background .22s,transform .16s;
+  }
+  .opt b{
+    flex:0 0 22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+    display:grid;place-items:center;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);margin-top:1px;
+  }
+  .opt:hover{border-color:rgba(232,197,138,.5);background:rgba(255,255,255,.075)}
+  .opt:active{transform:scale(.985)}
+  .opt.sel{
+    border-color:rgba(232,197,138,.95);background:rgba(232,197,138,.1);
+    box-shadow:0 0 0 1px rgba(232,197,138,.35),0 12px 30px -16px rgba(232,197,138,.7);
+  }
+  .opt.sel b{background:#e8c58a;border-color:#e8c58a;color:#1a1209}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:30px}
+  .nav .hint{font-size:11.5px;color:rgba(242,238,247,.28)}
+  .nav button{background:none;border:0;color:rgba(242,238,247,.55);font-family:inherit;font-size:13.5px;cursor:pointer;padding:10px 4px}
+  .nav button:disabled{opacity:.25;cursor:default}
+  .back-edit{margin-top:2px;text-align:center;font-size:11.5px;color:rgba(242,238,247,.28)}
+
+  /* ============ 加载 ============ */
+  .loading{text-align:center;padding-top:34vh}
+  .loading .ring{width:52px;height:52px;margin:0 auto 26px;border-radius:50%;border:1px solid rgba(255,255,255,.1);border-top-color:#e8c58a;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading p{font-size:13.5px;color:var(--dim);letter-spacing:.14em;margin:0}
+
+  /* ============ 结果 ============ */
+  .result{padding-top:24px}
+  .r-eyebrow{font-size:11.5px;letter-spacing:.34em;color:rgba(242,238,247,.42);text-align:center}
+  .card{
+    margin:20px 0 0;border-radius:22px;overflow:hidden;position:relative;
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 34px 80px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.09);
+    background:#0a0810;
+  }
+  .card img{display:block;width:100%;aspect-ratio:1024/960;object-fit:cover}
+  .card .tag{
+    position:absolute;top:14px;left:14px;font-size:10.5px;letter-spacing:.22em;
+    padding:6px 11px;border-radius:999px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);
+  }
+  .card .glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 50% 100%,rgba(0,0,0,.85),transparent 65%)}
+
+  .verdict{margin-top:26px}
+  .verdict h2{font-size:13px;letter-spacing:.3em;color:rgba(242,238,247,.45);font-weight:600;margin:0 0 12px}
+  .verdict p{font-size:16px;line-height:2;color:rgba(242,238,247,.9);margin:0 0 18px}
+  .verdict p.quote{border-left:2px solid #e0384c;padding-left:16px;color:#f3dcd9;font-size:16.5px}
+
+  .level{display:flex;align-items:center;gap:14px;margin:4px 0 0;padding:16px 18px;border-radius:16px;border:1px solid rgba(224,56,76,.28);background:rgba(224,56,76,.07)}
+  .level .lv-label{font-size:12px;letter-spacing:.2em;color:rgba(242,238,247,.5);flex:0 0 auto}
+  .lv-dots{display:flex;gap:7px;flex:1}
+  .lv-dots i{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.1)}
+  .lv-dots i.on{background:linear-gradient(90deg,#8d5ae0,#e0384c);box-shadow:0 0 10px rgba(224,56,76,.5)}
+  .level .lv-val{font-size:13px;font-weight:800;color:#e8909b;flex:0 0 auto}
+
+  .radar-box{position:relative;margin-top:6px;padding:10px 6px 0;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+  .radar-box canvas{width:100%!important;height:320px!important}
+
+  .deep p{font-size:15px;line-height:2.05;color:rgba(242,238,247,.82);margin:0 0 16px}
+  .deep p b{color:#e8c58a;font-weight:700}
+  .deep .origin{
+    padding:14px 16px;border-radius:14px;border-left:2px solid #8d5ae0;
+    background:rgba(141,90,224,.08);font-size:14.5px;line-height:1.95;color:rgba(242,238,247,.85);
+  }
+  .deep .origin b{color:#c3a6ee}
+
+  .mirror{display:flex;align-items:flex-start;gap:12px;margin-top:16px;padding:14px 16px;border-radius:14px;border:1px dashed rgba(232,197,138,.35);background:rgba(232,197,138,.05)}
+  .mirror .m-ico{font-size:20px;line-height:1.4}
+  .mirror .m-txt{font-size:13.5px;line-height:1.9;color:rgba(242,238,247,.72)}
+  .mirror .m-txt b{color:#e8c58a}
+
+  .hidden-side{margin-top:16px;padding:16px 18px;border-radius:16px;border:1px solid rgba(141,90,224,.3);background:rgba(141,90,224,.07)}
+  .hidden-side .h-tag{font-size:11px;letter-spacing:.24em;color:#c3a6ee;margin-bottom:8px}
+  .hidden-side .h-name{font-size:17px;font-weight:800;margin-bottom:6px}
+  .hidden-side .h-name span{color:#c3a6ee}
+  .hidden-side p{font-size:14px;line-height:1.95;color:rgba(242,238,247,.75);margin:0}
+
+  .sec-title{
+    margin:38px 0 14px;font-size:12px;letter-spacing:.3em;color:rgba(242,238,247,.45);
+    display:flex;align-items:center;gap:10px;
+  }
+  .sec-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.16),transparent)}
+
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tags span{font-size:12.5px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:rgba(242,238,247,.75);background:rgba(255,255,255,.035)}
+
+  .risk,.advice{list-style:none;padding:0;margin:0}
+  .risk li{position:relative;padding:13px 0 13px 22px;font-size:14.5px;line-height:1.8;color:rgba(242,238,247,.78);border-bottom:1px solid rgba(255,255,255,.06)}
+  .risk li::before{content:"";position:absolute;left:4px;top:22px;width:5px;height:5px;border-radius:50%;background:#e0384c;box-shadow:0 0 8px #e0384c}
+  .advice li{counter-reset:none;position:relative;padding:13px 0 13px 40px;font-size:14.5px;line-height:1.8;color:rgba(242,238,247,.8);border-bottom:1px solid rgba(255,255,255,.06)}
+  .advice{counter-reset:ad}
+  .advice li{counter-increment:ad}
+  .advice li::before{content:counter(ad,decimal-leading-zero);position:absolute;left:0;top:16px;font-size:12px;font-weight:800;color:#e8c58a}
+
+  .bars{margin:2px 0 0}
+  .row{margin-bottom:14px}
+  .row .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:rgba(242,238,247,.6);margin-bottom:7px}
+  .row .lbl i{font-style:normal;color:rgba(242,238,247,.32)}
+  .row .track{height:5px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+  .row .fill{height:100%;width:0;border-radius:4px;transition:width 1s cubic-bezier(.3,0,.2,1);background:rgba(255,255,255,.22)}
+  .row.top .lbl{color:#f0dfc0}
+  .row.top .fill{background:linear-gradient(90deg,#8d5ae0,#e0384c,#e8c58a);box-shadow:0 0 14px rgba(224,56,76,.45)}
+
+  .cta-row{display:flex;gap:10px;margin-top:34px}
+  .btn{flex:1;padding:15px 0;border-radius:999px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.1em;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink);transition:.2s}
+  .btn:active{transform:scale(.975)}
+  .btn.primary{border:0;color:#12060b;background:linear-gradient(135deg,#f5d9a0,#e6b566 45%,#c8933f);box-shadow:0 12px 32px -14px rgba(230,181,102,.7)}
+  .btn[disabled]{opacity:.5;pointer-events:none}
+  .unlimited{margin-top:14px;text-align:center;font-size:12px;color:rgba(242,238,247,.4)}
+  .unlimited b{color:#e8c58a;font-weight:700}
+  .foot{margin-top:30px;font-size:11.5px;line-height:2;color:rgba(242,238,247,.3);text-align:center}
+
+  /* ============ 长图预览弹层 ============ */
+  .shot-mask{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);padding:20px}
+  .shot-mask.on{display:flex}
+  .shot-box{max-width:min(460px,92vw);max-height:88vh;display:flex;flex-direction:column;gap:14px;text-align:center}
+  .shot-box img{max-width:100%;max-height:62vh;object-fit:contain;border-radius:14px;border:1px solid rgba(255,255,255,.2);box-shadow:0 30px 80px -20px #000}
+  .shot-tip{font-size:13px;color:rgba(242,238,247,.75);line-height:1.8}
+  .shot-tip b{color:#e8c58a}
+  .shot-row{display:flex;gap:10px}
+  .shot-row .btn{flex:1}
+  @media (hover:none){ .dl-only{display:none} }
+
+  .toast{position:fixed;left:50%;bottom:38px;transform:translate(-50%,20px);z-index:120;padding:11px 22px;border-radius:999px;background:rgba(20,16,26,.95);border:1px solid rgba(255,255,255,.16);font-size:13px;color:#fff;opacity:0;pointer-events:none;transition:.3s}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  @media (max-width:380px){ .q-title{font-size:20px} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ==================== 封面 ==================== -->
+  <section class="screen on" id="s-cover">
+    <div class="cover">
+      <div class="kicker">危险 人 格 图 鉴</div>
+      <h1>你体内藏着<br>哪种<em>危险人格</em>？</h1>
+      <p class="sub">二十道题，照见你不愿承认的那一面</p>
+      <div class="poem">
+        <p>每个人心里，都藏着一点危险的小情绪。</p>
+        <p>它可能是偶尔冒出来的占有欲，也可能是忍了很久的小脾气，或者是表面没事、心里早就记账的小心思。</p>
+        <p>你以为的自己，和深夜独处时那个自己，真的是同一个人吗？</p>
+      </div>
+      <button class="cta" id="btn-start">开 始 照 镜 子</button>
+      <div class="meta-line">20 题 · 约 3 分钟 · 支持保存结果长图</div>
+
+      <div class="gallery">
+        <div class="cell"><img src="assets/final/npd.png" alt="NPD"><span>NPD</span></div>
+        <div class="cell"><img src="assets/final/bpd.png" alt="BPD"><span>BPD</span></div>
+        <div class="cell"><img src="assets/final/yandere.png" alt="病娇"><span>病娇</span></div>
+        <div class="cell"><img src="assets/final/fuhei.png" alt="腹黑怪"><span>腹黑怪</span></div>
+        <div class="cell"><img src="assets/final/control.png" alt="控制狂"><span>控制狂</span></div>
+        <div class="cell"><img src="assets/final/rage.png" alt="暴走型"><span>暴走型</span></div>
+        <div class="cell"><img src="assets/final/sadist.png" alt="抖S"><span>抖S</span></div>
+        <div class="cell"><img src="assets/final/masochist.png" alt="抖M"><span>抖M</span></div>
+        <div class="cell"><img src="assets/final/masochism.png" alt="自虐狂"><span>自虐狂</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 答题 ==================== -->
+  <section class="screen" id="s-quiz">
+    <div class="topbar">
+      <div class="bar"><i id="prog"></i></div>
+      <div class="bar-meta"><span id="pm-left">01 / 20</span><span>危险人格测试</span></div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-index" id="q-index">Q U E S T I O N &nbsp;0 1</div>
+      <h2 class="q-title" id="q-title"></h2>
+      <p class="q-scene" id="q-scene"></p>
+      <div class="opts" id="opts"></div>
+      <div class="nav">
+        <button id="btn-prev">← 返回上一题</button>
+        <button id="btn-next" disabled>下一题 →</button>
+      </div>
+      <div class="back-edit">可随时返回上一题重新选择</div>
+    </div>
+  </section>
+
+  <!-- ==================== 加载 ==================== -->
+  <section class="screen" id="s-loading">
+    <div class="loading">
+      <div class="ring"></div>
+      <p id="load-text">正在照见你不愿承认的那一面…</p>
+    </div>
+  </section>
+
+  <!-- ==================== 结果 ==================== -->
+  <section class="screen" id="s-result">
+    <div class="result" id="result-body">
+      <div class="r-eyebrow">你 的 危 险 人 格 是</div>
+      <div class="card">
+        <span class="tag" id="r-en">—</span>
+        <img id="r-img" alt="结果卡" />
+        <div class="glow"></div>
+      </div>
+
+      <div class="verdict">
+        <h2>照 见</h2>
+        <p class="quote" id="r-line"></p>
+        <p id="r-desc"></p>
+      </div>
+
+      <div class="level">
+        <span class="lv-label">危 险 等 级</span>
+        <div class="lv-dots" id="r-level"></div>
+        <span class="lv-val" id="r-level-val"></span>
+      </div>
+
+      <div class="sec-title">人 格 雷 达 图</div>
+      <div class="radar-box"><canvas id="radar"></canvas></div>
+
+      <div class="sec-title">人 格 占 比</div>
+      <div class="bars" id="r-bars"></div>
+
+      <div class="sec-title">为 什 么 是 你</div>
+      <div class="deep" id="r-deep"></div>
+
+      <div class="sec-title">银 幕 上 的 另 一 个 你</div>
+      <div class="mirror" id="r-mirror"></div>
+
+      <div class="sec-title">你 的 暗 面 里 还 藏 着</div>
+      <div class="hidden-side" id="r-hidden"></div>
+
+      <div class="sec-title">暗 面 标 签</div>
+      <div class="tags" id="r-tags"></div>
+
+      <div class="sec-title">危 险 预 警</div>
+      <ul class="risk" id="r-risk"></ul>
+
+      <div class="sec-title">自 救 指 南</div>
+      <ul class="advice" id="r-advice"></ul>
+
+      <div class="cta-row">
+        <button class="btn primary" id="btn-save">保存结果长图</button>
+        <button class="btn" id="btn-again">再测一次</button>
+      </div>
+      <div class="unlimited">随时<b>返回修改答案</b> · 每次结果独立生成</div>
+      <div class="foot">
+        本测试改编自流行心理学人格画像，用于自我观察与情绪表达，<br>不构成任何医学或心理诊断。
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 长图预览 ==================== -->
+  <div class="shot-mask" id="shot-mask">
+    <div class="shot-box">
+      <img id="shot-img" alt="结果长图" />
+      <div class="shot-tip" id="shot-tip"><b>长按上方图片</b>即可保存到手机相册</div>
+      <div class="shot-row">
+        <button class="btn dl-only" id="btn-dl">下载到电脑</button>
+        <button class="btn" id="btn-shot-close">关 闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ========================================================
+   9 种危险人格（完整分析库）
+   ======================================================== */
+const TYPES = {
+  npd: {
+    name: "NPD", cn: "自恋型人格", level: 4,
+    img: "assets/final/npd.png",
+    line: "你不是在找爱，你是在找一面足够亮的镜子。",
+    desc: "你对自己有一张极其精致的说明书，并且很擅长让身边人照着念。被夸的时候你觉得理所当然，被忽视的时候你会整晚睡不着——不是受伤，是失重。你能在人群里三秒分辨出谁值得交往，因为你真正在意的只有一件事：这个人能不能看见你的光。",
+    deep: [
+      "你的自信是<b>外供型</b>的：自己生产的部分很有限，大部分靠别人的夸奖、羡慕、反应来供电。所以一旦没人看你，你会体验到一种类似戒断的空虚——那不是孤独，是断电。",
+      "在关系里，你把人分成<b>观众和工具</b>两类：观众负责鼓掌，工具负责解决问题。你并不坏，你只是真的觉得，自己的感受比别人的更重要一点——这一点，往往就是所有问题的起点。",
+      "你最怕的不是失败，而是<b>失败被看见</b>。所以你宁可错过，也不肯在别人面前露出不会、不懂、不行的一面。你把体面守得很好，代价是没人真正走近过你。"
+    ],
+    origin: "这个样子，多半是从小被当成「别人家的孩子」养大的：被爱是有条件的，条件是优秀。你学会的第一件事不是做自己，是做成绩单。",
+    mirror: { ico: "🎬", text: "《穿普拉达的女王》的米兰达、《爆裂鼓手》里的弗莱彻——<b>能力越强，越难承认自己也需要被爱，而不是被仰望。</b>" },
+    tags: ["被看见成瘾", "错不在我", "舞台依赖", "慕强滤镜"],
+    risk: [
+      "被批评时第一反应是「你不懂」，而不是「我看看」",
+      "把亲密关系经营成观众席，只留下会鼓掌的人",
+      "示弱对你来说比失败更难"
+    ],
+    advice: [
+      "每天做一件「不体面但真实」的小事：问一个蠢问题、承认一次不知道",
+      "把「这有什么了不起」换成「谢谢你告诉我」",
+      "找一个人，试着说一次「我最近过得不好」，不加任何解释",
+      "记录三天内所有没被夸奖也完成了的事——那就是不需要观众的你"
+    ]
+  },
+  bpd: {
+    name: "BPD", cn: "边缘型人格", level: 4,
+    img: "assets/final/bpd.png",
+    line: "你身上有八个自己，每一个都以为自己是唯一的那个。",
+    desc: "同一件事，你可以在一天里给出三种完全不同的情绪。爱一个人的时候愿意把命给他，被冷落十分钟就觉得他从来没爱过你。你不是情绪化，你是把感受放在最高优先级，理性永远排在它后面排队。深夜里删过又加回来的人，你比谁都清楚有几个。",
+    deep: [
+      "你的情绪不是大，是<b>快</b>。别人的情绪从 0 到 10 要走半小时，你只要三秒，而且中间没有过站。所以你不是「想太多」，你是根本来不及想。",
+      "你的人际关系是<b>黑白电视机</b>：要么全好，要么全坏，很少停在中间的灰色地带。前一秒还是灵魂伴侣，一句话不合就变成从没认识过——对方懵，你也懵。",
+      "你最深的恐惧是<b>被抛弃</b>，但你的行为模式偏偏是：先推开，来测试对方会不会回来。通过测试的人很少，不是他们不爱你，是这个考试本身太难了。"
+    ],
+    origin: "这多半来自很早的経験：曾经有重要的人，用「随时会消失」的方式爱过你。从那以后，你的安全感必须靠反复确认才能短暂成立。",
+    mirror: { ico: "🎬", text: "《被嫌弃的松子的一生》的松子、《消失的爱人》的艾米——<b>用尽全力去爱，又用尽全力去验证这份爱。</b>" },
+    tags: ["情绪过山车", "怕被抛弃", "极限亲密", "黑白思维"],
+    risk: [
+      "在「我值得」与「我不配」之间高频切换",
+      "用推开对方的方式测试对方会不会留下",
+      "情绪来的时候，先做决定再讲道理"
+    ],
+    advice: [
+      "给情绪装一个 10 分钟延迟器：最想发消息的时候，先设个闹钟",
+      "练习「灰色描述」：把「他讨厌我」改成「他今天心情可能不好」",
+      "准备一份「自我安抚清单」，在崩溃前使用，而不是崩溃后",
+      "把「你要走就走」换成「我在，你慢慢说」——先对自己说"
+    ]
+  },
+  yandere: {
+    name: "病娇", cn: "偏执占有型", level: 5,
+    img: "assets/final/yandere.png",
+    line: "你说的是「喜欢你」，心里想的是「只能是我」。",
+    desc: "你的爱非常完整，完整到没有缝隙给别人喘气。你会记住他所有的行程、他提过的每一个名字、他对话框里那个多出来的表情。你不觉得这叫控制，你觉得这叫在乎。真正的危险在于：你从来不用暴力，你用的是那种让人愧疚到无法离开的温柔。",
+    deep: [
+      "你的爱有<b>排他性过敏</b>：对方世界里出现的任何新事物——新朋友、新爱好、新习惯——都会被你的神经系统标记为「威胁」。你不是想控制他，你是真的会疼。",
+      "你有全套的<b>情报系统</b>：他随口提过的人名、三个月前的一句话、头像更换的时间。这些信息平时不用，但会在某个瞬间全部启动，拼成一幅让你心梗的图。",
+      "你付出的时候从不吝啬，甚至有种<b>献祭式浪漫</b>：为他熬夜、为他改掉习惯、为他切断社交。但付出的每一笔你都记得——不是要他还，是这让你觉得「他欠着我，就不会走」。"
+    ],
+    origin: "这种浓度，多半来自一次很深的「差点失去」：曾经有个人，在你毫无防备时离开了。从那以后，你不再相信「顺其自然」，你只相信「盯紧一点」。",
+    mirror: { ico: "🎬", text: "《消失的爱人》的艾米、《福尔摩斯小姐》外的每一个「我只是太爱你」——<b>爱到深处，检验标准变成了「你敢不敢只属于我」。</b>" },
+    tags: ["独占欲满格", "爱即占有", "情绪勒索", "献祭式付出"],
+    risk: [
+      "把关心做成全天候监控",
+      "对方想要空间，你听到的是「不爱了」",
+      "越付出越要求对方等额偿还"
+    ],
+    advice: [
+      "把「他在干嘛」换成「我在干嘛」——注意力是唯一能收回的投资",
+      "给对方划一块你绝不查看的自留地，练手，也练心",
+      "想查证的时候先问自己：我需要的是真相，还是安心？",
+      "练习说「你去吧，我也去见我的朋友」——并且真的去"
+    ]
+  },
+  fuhei: {
+    name: "腹黑怪", cn: "隐性攻击型", level: 4,
+    img: "assets/final/fuhei.png",
+    line: "你笑得最温和的时候，是心里开始记账的时候。",
+    desc: "你很少当场翻脸。你只是笑了笑，说没事，然后在心里给这个人重新归档。你的报复从不高调，通常是某一天他发现，所有人都开始觉得他有点问题——而你说过一句话吗？没有。你把所有攻击都包装成关心，把所有不满都藏进「随便你啊」。",
+    deep: [
+      "你的愤怒从不缺席，只是<b>改了装</b>：阴阳怪气、冷处理、「哦」、「随便」、已读不回。表面上风平浪静，实际上每一笔利息都在滚。",
+      "你是天生的<b>档案管理员</b>：谁在什么时候让你下不来台，谁说过哪句伤人的话，你记得比谁都清楚。你以为这是修养，其实是囤弹药。",
+      "你的杀伤力在<b>延迟爆发</b>：平时百依百顺，攒够了突然清算。对方一脸懵——他不知道自己欠了什么，因为账本只在你心里。"
+    ],
+    origin: "这通常来自一个「表达愤怒不安全」的童年：哭闹会被骂，顶嘴会被罚。于是你学会了把怒气压进箱底——压得越好，越被夸懂事。",
+    mirror: { ico: "🎬", text: "《甄嬛传》后期的甄嬛、《怦然心动》外的每一个「我没事」——<b>真正的反击从不发生在当场。</b>" },
+    tags: ["表面无波", "耐心记账", "借刀型选手", "冷处理天赋"],
+    risk: [
+      "用沉默与阴阳怪气代替干脆的表达",
+      "积攒到临界点后一次性清算，对方一头雾水",
+      "习惯了让别人替你说出不高兴"
+    ],
+    advice: [
+      "小事当场说：练习一句话版本——「你刚才那样说，我不舒服」",
+      "每月清一次账：把心里的小本本摊开处理，别让它过夜变成陈年老账",
+      "把「随便」从字典里删掉，换成你的真实偏好",
+      "发火不等于关系破裂——很多关系反而因透明而更稳"
+    ]
+  },
+  control: {
+    name: "控制狂", cn: "支配型人格", level: 3,
+    img: "assets/final/control.png",
+    line: "你不讨厌意外，你只是不接受自己没被通知过的那种。",
+    desc: "提前十分钟到是基本修养，行程表要精确到分钟，连别人的人生规划你也想帮着排一下。你清楚每件事的正确做法，并且愿意为此付出代价。真正让你崩溃的不是事情出问题，是事情在你看不见的地方出了问题。",
+    deep: [
+      "控制欲的本质是<b>不确定性过敏</b>：计划表不是爱好，是你的镇静剂。每一个被确认的细节，都在给你短暂的心安。",
+      "你的爱常常长成<b>经纪人式</b>的：帮他安排、替他兜底、为他把关。你以为这是责任，对方体验到的往往是——在这段关系里，他是个不需要长大的孩子。",
+      "你的口头禅是「<b>听我的，没错</b>」。它通常真的没错，可一句「没错」说一百遍，别人的「对」就再也没有出场机会了。"
+    ],
+    origin: "这多半来自「失控过」的经历：曾经有件事在你小时候轰然失控，没人管、没人问。从那以后，「提前安排好一切」成了你对抗世界的方式。",
+    mirror: { ico: "🎬", text: "《穿普拉达的女王》的米兰达、《小欢喜》里的宋倩——<b>把「为你好」织成一张没有出口的网。</b>" },
+    tags: ["计划强迫症", "边界感稀薄", "细节警察", "救世主情结"],
+    risk: [
+      "把「为你好」当成越界的通行证",
+      "别人慢半拍，你的火气先到",
+      "失去掌控时焦虑会伪装成愤怒"
+    ],
+    advice: [
+      "每天故意留一件「不安排」的事，让它是它本来的样子",
+      "把「听我的」咽回去三次，看世界会不会塌——大概率不会",
+      "区分「我的事」和「别人的事」，别人的事只给建议不给方案",
+      "焦虑上来时问自己：我在怕这件事，还是在怕失控的感觉？"
+    ]
+  },
+  rage: {
+    name: "暴走型", cn: "间歇性暴怒型", level: 5,
+    img: "assets/final/rage.png",
+    line: "你的爆炸是即时的，后悔是滞后的。",
+    desc: "大部分时候你温和好说话，甚至有点好脾气。但你身上有一条只有你自己知道的线——被踩到就瞬间切断理性。你不会预警，没有前奏，从「没事」到「受不了」只隔一秒。炸完之后你比谁都后悔，可下一次，还是一样。",
+    deep: [
+      "你的愤怒系统是<b>开关式</b>的，不是旋钮式的：别人是慢慢升温，你是直接跳闸。所以你的爆发在别人眼里「毫无预兆」——其实预警都在你自己心里，只是从不外播。",
+      "你平时越好说话，炸起来越<b>吓人</b>：因为你平时的「没事」不是没事，是利息。攒到还不上，就一次连本带利砸出来。",
+      "爆炸后你会进入<b>深度后悔模式</b>：反复回想自己说了什么、摔了什么。但后悔不会改变下次的剧本，因为你从没在「半路」练习过刹车——你只在终点练习过撞毁。"
+    ],
+    origin: "这多半和「吼着长大」的家有关：情绪在你家里从来不是被讨论的，是被示范的。你学到的第一套表达系统，就是音量。",
+    mirror: { ico: "🎬", text: "《爆裂鼓手》的弗莱彻、《愤怒管理》里的每一个「我平时人很好」——<b>失控的那一刻，最亲近的人总在射程之内。</b>" },
+    tags: ["情绪冷却慢", "底线超清晰", "一秒切换", "事后狂后悔"],
+    risk: [
+      "在最亲密的人面前，最容易破防",
+      "把委屈攒到最后才一次性爆发",
+      "爆发时说出口的话，事后无法撤回"
+    ],
+    advice: [
+      "识别你的「升温信号」：心跳、握拳、音量——在 60 分时就喊停，别等到 100",
+      "物理隔离法：感觉要炸，直接离开现场十分钟，这不是逃避，是刹车",
+      "把「你怎么这样」换成「我现在很生气」——攻击事，别攻击人",
+      "平时就练表达不满，小火常放，别等大火烧山"
+    ]
+  },
+  sadist: {
+    name: "抖S", cn: "掌控型人格", level: 3,
+    img: "assets/final/sadist.png",
+    line: "你要的不是赢，是看着对方认输那一刻的眼神。",
+    desc: "你天然享受掌控感——话说到什么程度、对方笑到什么程度、关系推进到哪一步，你都心里有数。你不太容易真正动心，但很容易上头：那种「他本来很有主见，却愿意听我的」的落差，比任何情话都上瘾。",
+    deep: [
+      "你对<b>权力落差</b>极度敏感：一段关系里谁追谁、谁求谁、谁先低头，你都算得清清楚楚。你享受的不是欺负人，是确认——确认主动权在自己手里。",
+      "你的心动对象常常是<b>反差</b>：越是有主见、越是被很多人喜欢、越是不好惹的人，越让你想试试「他服不服我」。制服不了的人，你反而更上头。",
+      "你的温柔是<b>限量发售</b>的：只对服你的人开放。所以跟你在一起的人，会经历一种冰火两重天——外人看到的是冷，他们独享那一点点热。"
+    ],
+    origin: "这多半来自「赢惯了」或者「输怕了」：要么从小一直是掌控局面的那个，要么曾经输到没有还手之力。两种起点，通向同一个终点——不再允许自己处于下位。",
+    mirror: { ico: "🎬", text: "《来自深渊的呼叫》外的每一个「猫系恋爱脑」、《傲慢与偏见》初期的达西——<b>把爱说成考验，把在乎藏进棋局。</b>" },
+    tags: ["气场压制", "主导欲强", "慕弱倾向", "边界试探者"],
+    risk: [
+      "用强势替代沟通，短期高效长期伤人",
+      "很难承认自己想被依靠",
+      "把妥协误读为忠诚"
+    ],
+    advice: [
+      "每周说一次「听你的」，并且真的照办",
+      "观察你上头的时刻：你爱上的是那个人，还是他低头的样子？",
+      "练习「先输一半」：辩论时主动承认对方对的部分",
+      "记住：能让你卸下王座的人，才是能让你休息的人"
+    ]
+  },
+  masochist: {
+    name: "抖M", cn: "顺从型人格", level: 2,
+    img: "assets/final/masochist.png",
+    line: "你怕的不是被支配，是没人愿意支配你。",
+    desc: "面对强势的人，你会自动切换成柔软模式——不是害怕，是安心。你愿意把决定权交出去，因为有人替你拿主意的时候，你才终于觉得自己被接住了。你的付出非常彻底，彻底到常常忘了问一句：他值得吗？",
+    deep: [
+      "你的关系模式是<b>被领养式</b>的：你不太挑「他好不好」，你挑「他够不够强、会不会管我」。强势、独断、说一不二的人，对你有天然的引力。",
+      "你的退让不是没脾气，是<b>用退让换安全感</b>：只要我不闹、我听话、我都行，他就不会离开吧。这套逻辑在你小时候也许成立，用在成年人的爱情里，往往输得很干净。",
+      "你的付出有一个隐藏条款：<b>沉默的期待</b>。你从不明说要什么，但你会偷偷记账，然后在某一天心凉——「我都这样了，他怎么还能这样」。其实他真的不知道。"
+    ],
+    origin: "这多半来自「懂事」的童年：你很早就学会了大人的脸色比自己的需求重要。被夸「真乖」的那天，你就开始练习把自己往后放。",
+    mirror: { ico: "🎬", text: "《被嫌弃的松子的一生》里的每一次「这次一定」——<b>把被需要当成被爱，是最温柔的陷阱。</b>" },
+    tags: ["强势依赖", "习惯性退让", "被需要即安全", "沉没成本信徒"],
+    risk: [
+      "把「被需要」当成被爱的证明",
+      "明知关系在消耗，还是很难走",
+      "讨好的次数比直接的次数多"
+    ],
+    advice: [
+      "每天说一次「不」——对象随便，事情随便，练的就是这个字",
+      "把「都行」换成一句真话，哪怕只是「我想吃辣的」",
+      "判断一段关系：离开他，你还剩下什么？答案不该是「不知道」",
+      "被爱不需要考试。不用考到满分才配被留下"
+    ]
+  },
+  masochism: {
+    name: "自虐狂", cn: "内耗型人格", level: 2,
+    img: "assets/final/masochism.png",
+    line: "别人对你做的最狠的事，你也正在对自己做一遍。",
+    desc: "事情出了差错，你的第一反应永远是「是不是我哪里不对」。你能为一句别人的叹气失眠三小时，能在深夜反复复盘三年前的一句话。你不恨别人，你把所有的恨意都调转枪口，对准了自己——而且枪法极准。",
+    deep: [
+      "你有<b>世界级水准的自我审判系统</b>：任何事件，你都能在三秒内找到「这是我的错」的角度。别人还没开始怪你，你已经判完了，连上诉的机会都没给自己留。",
+      "你的深夜叫<b>反刍现场</b>：三年前的一句蠢话、上周没接住的尴尬、今天同事的一声叹气，循环播放，一遍比一遍清晰。你以为这是反思，其实这是把自己钉在原地。",
+      "你的善良有个<b>漏洞</b>：对所有人开放，唯独不给自己。别人犯错你会安慰「没事的」，自己犯同样的错——死刑，立即执行。"
+    ],
+    origin: "这多半来自「自我批评最安全」的成长环境：怪自己，至少不会惹恼任何人。你把这套生存策略用到了今天——只是现在，没人再需要你这样活了。",
+    mirror: { ico: "🎬", text: "《海边的曼彻斯特》的李、《马男波杰克》里的每一句「都怪我」——<b>最漫长的刑罚，是自己给自己判的。</b>" },
+    tags: ["自责惯性", "深夜反刍", "过度共情", "自我审判"],
+    risk: [
+      "把别人的情绪当成自己的责任",
+      "拒绝被安慰，因为觉得自己不配",
+      "身体已经累了，脑子还不肯停"
+    ],
+    advice: [
+      "引入「律师视角」：每次自我审判前，先替自己辩护三条",
+      "反刍时给自己设 15 分钟闹钟——时间到，必须换台",
+      "把「都怪我」换成「这次没做好，下次改哪一条」——结论要能行动",
+      "每天记一件「今天我做得不错的事」，哪怕只是按时吃了饭"
+    ]
+  }
+};
+const ORDER = ["npd","bpd","yandere","fuhei","control","rage","sadist","masochist","masochism"];
+
+/* ========================================================
+   Supabase 配置（部署前填入你的项目信息）
+   Project URL:  Supabase 控制台 → Settings → API
+   Anon Key:     Supabase 控制台 → Settings → API → anon public
+   ======================================================== */
+const SUPABASE_URL = "";       // 例如 "https://abcdefgh.supabase.co"
+const SUPABASE_ANON_KEY = "";  // 例如 "eyJhbGciOi..."
+
+async function saveResultToDB(score, topKey, secondKey, total){
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return; // 未配置时静默跳过，不影响答题
+  try{
+    await fetch(SUPABASE_URL + "/rest/v1/test_results", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        top_type: TYPES[topKey].name + " · " + TYPES[topKey].cn,
+        second_type: TYPES[secondKey].name + " · " + TYPES[secondKey].cn,
+        scores: score,
+        total: total,
+        ua: navigator.userAgent
+      })
+    });
+  }catch(e){ console.warn("结果入库失败（不影响使用）", e); }
+}
+
+/* ========================================================
+   20 道题
+   ======================================================== */
+const QUESTIONS = [
+  { title:"发了一条朋友圈，<br>十分钟后你<span class='hl'>又删掉了</span>。", scene:"其实没什么不能看的，只是突然觉得，发出去也没人会懂。",
+    opts:[ {k:"bpd",t:"反复编辑了很多遍，发出去的瞬间就想撤回"}, {k:"masochism",t:"觉得自己发的每一条都很蠢，别人肯定在心里笑"}, {k:"npd",t:"不是删掉，是换了一条更高级的重新发"} ] },
+  { title:"有人当众指出你的错误，<br>而且他<span class='hl'>说得对</span>。", scene:"空气安静了半秒，所有人都在等你的反应。",
+    opts:[ {k:"rage",t:"先让他把话说完，然后让他知道什么叫代价"}, {k:"npd",t:"笑着说“收到”，心里认定这人不懂全局"}, {k:"control",t:"当场把流程重排一遍，证明错的不是逻辑"} ] },
+  { title:"你发现喜欢的人<br>正在<span class='hl'>和另一个人聊天</span>。", scene:"屏幕上是他，笑得很自然，你从没见他那样笑过。",
+    opts:[ {k:"yandere",t:"点进那个人主页，把他这三个月看得懂的都看完"}, {k:"masochist",t:"先退出，然后说服自己“我们本来也没那么熟”"}, {k:"sadist",t:"把手机递过去，笑着说：那你们聊，我等你回我"} ] },
+  { title:"深夜两点，<br>你的脑子里正在播放——", scene:"关了灯，耳机摘了，房间安静得能听见自己心跳。",
+    opts:[ {k:"masochism",t:"三年前说错的那句话，以及所有后果"}, {k:"bpd",t:"今天开心到爆，现在却觉得整个人是空的"}, {k:"control",t:"明天的每一件事，以及可能出错的所有环节"} ] },
+  { title:"对方说：“<span class='hl'>你能不能别管我</span>”。", scene:"这句话还没冷，你胸口已经先凉了。",
+    opts:[ {k:"control",t:"“我这是关心，你连这都分不清？”"}, {k:"yandere",t:"“那你去吧。”然后开始想他要去哪、见谁"}, {k:"masochist",t:"“对不起，是我太黏人了。”"} ] },
+  { title:"朋友发来消息：<br>“你最近是不是<span class='hl'>变了</span>？”", scene:"你盯着这三个字看了很久，手指悬在键盘上。",
+    opts:[ {k:"npd",t:"“没有啊，是你们跟不上了”"}, {k:"fuhei",t:"“哪里变了呀？你直说。”——同时把他归类"}, {k:"masochism",t:"立刻自我审判：我是不是让人讨厌了"} ] },
+  { title:"电梯里，<br>你被陌生人<span class='hl'>吼了一句</span>。", scene:"门还没开，你的手心已经出汗。",
+    opts:[ {k:"rage",t:"原地回击，声音一定要盖过他"}, {k:"masochism",t:"一整天都在想：我是不是挡到他了"}, {k:"sadist",t:"盯着他的眼睛不说话，直到他先移开"} ] },
+  { title:"一件小事搞砸了，<br>第一句从你嘴里出来的是——", scene:"会议室里没人说话，所有人都在等一个解释。",
+    opts:[ {k:"masochism",t:"“都怪我，我早该想到的。”"}, {k:"npd",t:"“这个流程本身就有问题。”"}, {k:"bpd",t:"先崩溃三分钟，再回来把事解决"} ] },
+  { title:"你终于拿到了想要的<br><span class='hl'>那个位置</span>。", scene:"所有人都来祝贺你，你笑得很好看。",
+    opts:[ {k:"sadist",t:"第一反应是看谁没来祝贺"}, {k:"control",t:"第一反应是看还有哪些环节不在自己手里"}, {k:"bpd",t:"第一反应是：完了，他们迟早发现我没那么好"} ] },
+  { title:"有人对你说：<br>“我<span class='hl'>完全信任</span>你。”", scene:"这句话的重量，比你想象的更复杂。",
+    opts:[ {k:"yandere",t:"很好，那就一直这样，别再去看别人"}, {k:"masochist",t:"压力瞬间来了，我怕我配不上这份信任"}, {k:"fuhei",t:"信任是筹码，先收着，不用急着用"} ] },
+  { title:"你在群里被<span class='hl'>冷落</span>了。<br>你的表现是——", scene:"消息发出去十七分钟，只有一个人回了个表情。",
+    opts:[ {k:"bpd",t:"退群、删话，然后等谁来问你怎么了"}, {k:"npd",t:"再发一条更好的，让他们不得不回应"}, {k:"control",t:"私聊每个人，把局面重新组织起来"} ] },
+  { title:"你更害怕哪一种<span class='hl'>失控</span>？", scene:"假设只能选一个，且终身无法撤回。",
+    opts:[ {k:"control",t:"计划被打乱，节奏被别人握在手里"}, {k:"yandere",t:"他有了一个我不知道的世界"}, {k:"rage",t:"被人踩着底线，还要笑着说没关系"} ] },
+  { title:"道歉这件事，<br>你的真实态度是——", scene:"两个字，打出来只要三秒，但你要想半小时。",
+    opts:[ {k:"npd",t:"可以道歉，但要看值不值得我低头"}, {k:"masochism",t:"道歉太快了，快到自己都觉得卑微"}, {k:"sadist",t:"让对方先把姿态放低，我再决定原不原谅"} ] },
+  { title:"朋友借走的钱，<br>三个月了<span class='hl'>只字不提</span>。", scene:"你提也不是，不提也不是，每次点开对话框又退出来。",
+    opts:[ {k:"fuhei",t:"不催，先记着，等哪天需要TA帮忙的时候一起算"}, {k:"masochist",t:"算了，可能TA忘了，我开口显得很小气"}, {k:"rage",t:"直接挑明，一分都不能少，当下就要个说法"} ] },
+  { title:"你愿意承认<br>自己<span class='hl'>有点危险</span>吗？", scene:"这不是一道判断题，是一道勇气题。",
+    opts:[ {k:"rage",t:"承认，但我只对自己人危险"}, {k:"npd",t:"不承认，我只是要求高了一点"}, {k:"masochism",t:"承认，而且我比谁都清楚自己哪里有问题"} ] },
+  { title:"朋友喝多了，<br>把一个<span class='hl'>很大的秘密</span>告诉了你。", scene:"说完TA就睡了，你却越来越清醒。",
+    opts:[ {k:"yandere",t:"把它记下来，连同TA说过的话一起收好"}, {k:"fuhei",t:"没说什么，但你知道这个秘密将来用得上"}, {k:"masochist",t:"压力好大，你其实根本不想承担别人的秘密"} ] },
+  { title:"生活里出现了一个<br><span class='hl'>特别强势的人</span>。", scene:"TA说一不二，气场两米八，所有人都听TA的。",
+    opts:[ {k:"masochist",t:"有TA在，你终于不用自己做决定了，很轻松"}, {k:"sadist",t:"你开始琢磨，怎么让TA也听你的"}, {k:"bpd",t:"TA冷淡一分钟，你能脑补完一场分手"} ] },
+  { title:"愤怒抵达顶点的那一次，<br>你做了什么？", scene:"不是电影里的爆发，是你真实发生过的一次。",
+    opts:[ {k:"rage",t:"摔门、吼、砸手机，声音必须先出去"}, {k:"bpd",t:"前一秒摔门，后一秒哭着道歉，情绪自己都刹不住"}, {k:"masochism",t:"你把愤怒咽了下去，转成整晚的自我攻击"} ] },
+  { title:"恋爱进行到第三个月，<br>你最想<span class='hl'>掌握</span>的是——", scene:"假设这三种都能做到，且对方不会发现。",
+    opts:[ {k:"yandere",t:"TA的密码、行程、朋友圈，全部"}, {k:"sadist",t:"TA为你改变习惯的样子，全部"}, {k:"fuhei",t:"TA做错的事，留到关键时刻用的那种"} ] },
+  { title:"别人一再<span class='hl'>越过你的边界</span>，<br>还笑着说“别这么敏感”。", scene:"第三次了。这一次你的反应是——",
+    opts:[ {k:"control",t:"把规矩重新讲一遍：我的底线在哪，你记住了"}, {k:"masochist",t:"笑着点点头，回去的路上越想越堵"}, {k:"fuhei",t:"笑着说“没关系”，但从此换了一个人设对TA"} ] }
+];
+
+/* ========================================================
+   逻辑
+   ======================================================== */
+const $ = s => document.querySelector(s);
+const state = { i: 0, ans: new Array(QUESTIONS.length).fill(null), radar: null };
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+  $(id).classList.add("on");
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+function renderQ(){
+  const q = QUESTIONS[state.i];
+  $("#q-index").textContent = "Q U E S T I O N  " + String(state.i+1).padStart(2,"0");
+  $("#q-title").innerHTML = q.title;
+  $("#q-scene").textContent = q.scene;
+  $("#prog").style.width = ((state.i) / QUESTIONS.length * 100) + "%";
+  $("#pm-left").textContent = String(state.i+1).padStart(2,"0") + " / " + QUESTIONS.length;
+
+  const box = $("#opts");
+  box.innerHTML = "";
+  const letters = ["A","B","C"];
+  q.opts.forEach((o, idx) => {
+    const b = document.createElement("button");
+    b.className = "opt" + (state.ans[state.i] === idx ? " sel" : "");
+    b.innerHTML = '<b>' + letters[idx] + '</b><span>' + o.t + '</span>';
+    b.onclick = () => {
+      state.ans[state.i] = idx;
+      box.querySelectorAll(".opt").forEach(x => x.classList.remove("sel"));
+      b.classList.add("sel");
+      $("#btn-next").disabled = false;
+      $("#prog").style.width = ((state.i+1) / QUESTIONS.length * 100) + "%";
+      if (navigator.vibrate) navigator.vibrate(8);
+      setTimeout(() => { if (state.i < QUESTIONS.length - 1) { state.i++; renderQ(); } else { finish(); } }, 260);
+    };
+    box.appendChild(b);
+  });
+  $("#btn-prev").disabled = state.i === 0;
+  $("#btn-next").disabled = state.ans[state.i] === null;
+  $("#btn-next").textContent = state.i === QUESTIONS.length - 1 ? "看 结 果 →" : "下一题 →";
+}
+
+$("#btn-prev").onclick = () => { if (state.i > 0) { state.i--; renderQ(); } };
+$("#btn-next").onclick = () => {
+  if (state.ans[state.i] === null) return;
+  if (state.i < QUESTIONS.length - 1) { state.i++; renderQ(); } else { finish(); }
+};
+
+let lcTimer;
+function finish(){
+  show("#s-loading");
+  const texts = ["正在照见你不愿承认的那一面…","正在统计你藏起来的情绪…","正在绘制人格雷达图…","正在显影第 9 号人格…"];
+  let t = 0;
+  clearInterval(lcTimer);
+  lcTimer = setInterval(() => { t = (t+1) % texts.length; $("#load-text").textContent = texts[t]; }, 700);
+  setTimeout(() => { clearInterval(lcTimer); calc(); show("#s-result"); revealBars(); }, 2400);
+}
+
+function calc(){
+  const score = {};
+  ORDER.forEach(k => score[k] = 0);
+  state.ans.forEach((idx, qi) => {
+    if (idx === null) return;
+    score[QUESTIONS[qi].opts[idx].k]++;
+  });
+  const total = state.ans.filter(x => x !== null).length;
+  const ranked = ORDER.slice().sort((a,b) => score[b] - score[a]);
+  const topKey = ranked[0], secondKey = ranked[1];
+  const d = TYPES[topKey], sd = TYPES[secondKey];
+
+  $("#r-img").src = d.img;
+  $("#r-img").alt = d.cn;
+  $("#r-en").textContent = d.name + " · " + d.cn;
+  $("#r-line").textContent = "“" + d.line + "”";
+  $("#r-desc").textContent = d.desc;
+
+  $("#r-level").innerHTML = [1,2,3,4,5].map(n => '<i class="' + (n <= d.level ? "on" : "") + '"></i>').join("");
+  $("#r-level-val").textContent = "LV." + d.level + " · " + ["","无风带","暗流区","雷暴带","深水区","风暴眼"][d.level];
+
+  $("#r-deep").innerHTML =
+    d.deep.map(p => "<p>" + p + "</p>").join("") +
+    '<div class="origin"><b>为什么会长成这样？</b><br>' + d.origin + '</div>';
+
+  $("#r-mirror").innerHTML =
+    '<div class="m-ico">' + d.mirror.ico + '</div><div class="m-txt">' + d.mirror.text + '</div>';
+
+  const spct = total ? Math.round(score[secondKey]/total*100) : 0;
+  $("#r-hidden").innerHTML =
+    '<div class="h-tag">副 人 格 · 隐 藏 出 场</div>'
+    + '<div class="h-name"><span>' + sd.name + '</span> · ' + sd.cn + ' · ' + spct + '%</div>'
+    + '<p>“' + sd.line + '” —— 你的暗面不止一层。当主人格压不住场面的时候，这一位会悄悄接手：'
+    + '状态差、深夜、恋爱受挫的时候，最容易被TA接管。别急着消灭TA，先学会认出TA。</p>';
+
+  $("#r-tags").innerHTML = d.tags.map(x => "<span># " + x + "</span>").join("");
+  $("#r-risk").innerHTML = d.risk.map(x => "<li>" + x + "</li>").join("");
+  $("#r-advice").innerHTML = d.advice.map(x => "<li>" + x + "</li>").join("");
+
+  $("#r-bars").innerHTML = ranked.map((k,i) => {
+    const pct = total ? Math.round(score[k]/total*100) : 0;
+    return '<div class="row' + (i===0?' top':'') + '">'
+      + '<div class="lbl"><span>' + TYPES[k].name + ' · ' + TYPES[k].cn + '</span><i>' + pct + '%</i></div>'
+      + '<div class="track"><div class="fill" data-w="' + Math.max(pct, 2) + '"></div></div></div>';
+  }).join("");
+
+  drawRadar(ORDER.map(k => total ? +( (score[k]/total*100).toFixed(1) ) : 0),
+            ORDER.map(k => TYPES[k].name));
+
+  saveResultToDB(score, topKey, secondKey, total);
+}
+
+function drawRadar(values, labels){
+  if (state.radar) { state.radar.destroy(); state.radar = null; }
+  const ctx = document.getElementById("radar").getContext("2d");
+  const maxV = Math.max(20, Math.ceil(Math.max(...values) / 10) * 10 + 10);
+  state.radar = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: "rgba(141,90,224,.22)",
+        borderColor: "#e0384c",
+        borderWidth: 2,
+        pointBackgroundColor: "#e8c58a",
+        pointBorderColor: "#e8c58a",
+        pointRadius: 3.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 700 },
+      plugins: { legend: { display: false },
+        tooltip: { backgroundColor: "rgba(20,16,26,.95)", borderColor: "rgba(255,255,255,.2)", borderWidth: 1,
+          callbacks: { label: c => " " + c.value + "%" } } },
+      scales: {
+        r: {
+          min: 0, max: maxV,
+          grid: { color: "rgba(255,255,255,.09)" },
+          angleLines: { color: "rgba(255,255,255,.09)" },
+          pointLabels: { color: "rgba(242,238,247,.72)", font: { size: 11, family: "PingFang SC,Microsoft YaHei,sans-serif" } },
+          ticks: { display: false, stepSize: Math.ceil(maxV/4) }
+        }
+      }
+    }
+  });
+}
+
+function revealBars(){
+  requestAnimationFrame(() => {
+    document.querySelectorAll("#r-bars .fill").forEach((el,i) => {
+      setTimeout(() => { el.style.width = el.dataset.w + "%"; }, 80 + i*60);
+    });
+  });
+}
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 2000);
+}
+
+/* ============ 保存长图 ============ */
+const isTouch = window.matchMedia("(hover: none)").matches;
+
+$("#btn-save").onclick = async () => {
+  const btn = $("#btn-save");
+  btn.disabled = true; btn.textContent = "正在生成长图…";
+  toast("正在合成长图，请稍候");
+  await new Promise(r => setTimeout(r, 60));
+  try{
+    const node = document.getElementById("result-body");
+    const canvas = await html2canvas(node, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#07060a",
+      scrollX: 0, scrollY: 0,
+      windowWidth: document.documentElement.clientWidth
+    });
+    const dataUrl = canvas.toDataURL("image/png");
+    $("#shot-img").src = dataUrl;
+    $("#shot-tip").innerHTML = isTouch
+      ? "<b>长按上方图片</b> → 「保存图片 / 加入照片」即可存入手机相册"
+      : "点击下方按钮保存图片文件，或<b>右键图片 → 图片另存为</b>";
+    document.getElementById("shot-mask").classList.add("on");
+    state._shot = dataUrl;
+  }catch(e){
+    console.error(e);
+    toast("生成失败，请重试或换浏览器");
+  }finally{
+    btn.disabled = false; btn.textContent = "保存结果长图";
+  }
+};
+
+$("#btn-dl").onclick = () => {
+  if (!state._shot) return;
+  const a = document.createElement("a");
+  a.download = "危险人格测试-" + Date.now() + ".png";
+  a.href = state._shot;
+  a.click();
+};
+$("#btn-shot-close").onclick = () => $("#shot-mask").classList.remove("on");
+$("#shot-mask").addEventListener("click", e => { if (e.target === $("#shot-mask")) $("#shot-mask").classList.remove("on"); });
+
+/* 手机上禁用长图右键菜单，引导长按保存 */
+$("#shot-img").addEventListener("contextmenu", e => { if (isTouch) e.preventDefault(); });
+
+$("#btn-start").onclick = () => { show("#s-quiz"); state.i = 0; state.ans = new Array(QUESTIONS.length).fill(null); renderQ(); };
+$("#btn-again").onclick = () => {
+  state.i = 0; state.ans = new Array(QUESTIONS.length).fill(null);
+  show("#s-quiz"); renderQ();
+};
+
+/* 支持 ?p=N 直接跳到第 N 题预览 */
+const pv = new URLSearchParams(location.search).get("p");
+if (pv) { show("#s-quiz"); state.i = Math.max(0, Math.min(QUESTIONS.length-1, parseInt(pv)-1)); renderQ(); }
+</script>
+</body>
+</html>
